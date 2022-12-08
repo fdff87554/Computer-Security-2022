@@ -1,5 +1,8 @@
 # 2022 Computer Security HW1 Writeup - Crypto
 
+[![hackmd-github-sync-badge](https://hackmd.io/ewW2qhyqSTWPgtI2AZtJpg/badge)](https://hackmd.io/ewW2qhyqSTWPgtI2AZtJpg)
+
+
 * [HW1 github (Writeup and Payload)](https://github.com/fdff87554/Computer-Security-2022/tree/main/Homework-01)
 
 ## COR - LFSR
