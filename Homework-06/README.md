@@ -1,0 +1,20 @@
+# 2022 Computer Security HW6 Writeup - Pwn
+
+* [HW6 github (Writeup and Payload)](https://github.com/fdff87554/Personal-Studies/tree/main/Cyber-Security/Writeups/Computer-Security-2022/HW6)
+
+## got2win - LAB
+
+## rop2win - LAB
+
+## how2know - HW
+
+## rop++ - HW
+
+
+
+---
+###### tags: `CyberSec` `Writeup` `2022`
+
+<style>
+.navbar-brand::after { content: " × Crazyfire Lee"; }
+</style>
