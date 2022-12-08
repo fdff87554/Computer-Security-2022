@@ -1,5 +1,8 @@
 # 2022 Computer Security HW7 Writeup - Pwn
 
+[![hackmd-github-sync-badge](https://hackmd.io/7K8jim6uTFGGWeZsHXnioA/badge)](https://hackmd.io/7K8jim6uTFGGWeZsHXnioA)
+
+
 * [HW7 github (Writeup and Payload)](https://github.com/fdff87554/Computer-Security-2022/tree/main/Homework-07)
 
 ## heapmath - LAB
