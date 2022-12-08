@@ -1,5 +1,8 @@
 # 2022 Computer Security HW2 Writeup - Crypto
 
+[![hackmd-github-sync-badge](https://hackmd.io/uaqKLPNLSN6ayI_InqxFyQ/badge)](https://hackmd.io/uaqKLPNLSN6ayI_InqxFyQ)
+
+
 * [HW2 github (Writeup and Payload)](https://github.com/fdff87554/Computer-Security-2022/tree/main/Homework-02)
 
 ## AES - Side Channel Attack
