@@ -1,5 +1,8 @@
 # 2022 Computer Security HW0 Writeup
 
+[![hackmd-github-sync-badge](https://hackmd.io/XR0SqV3yQI6payYzGW77sw/badge)](https://hackmd.io/XR0SqV3yQI6payYzGW77sw)
+
+
 * [HW0 github (Writeup and Payload)](https://github.com/fdff87554/Computer-Security-2022/tree/main/Homework-00)
 
 ## Nine - Reverse
