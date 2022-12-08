@@ -1,6 +1,6 @@
 # 2022 Computer Security HW0 Writeup
 
-* [HW0 github (Writeup and Payload)](https://github.com/fdff87554/Computer-Security-2022/Homework-00)
+* [HW0 github (Writeup and Payload)](https://github.com/fdff87554/Computer-Security-2022/tree/main/Homework-00)
 
 ## Nine - Reverse
 
