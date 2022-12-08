@@ -1,5 +1,8 @@
 # 2022 Computer Security HW4 Writeup - Reverse
 
+[![hackmd-github-sync-badge](https://hackmd.io/Qln72rAiTH-hMfZTvuOcGQ/badge)](https://hackmd.io/Qln72rAiTH-hMfZTvuOcGQ)
+
+
 * [HW4 github (Writeup and Payload)](https://github.com/fdff87554/Computer-Security-2022/tree/main/Homework-04)
 
 ## ooxx
