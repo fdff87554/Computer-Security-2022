@@ -1,6 +1,6 @@
 # 2022 Computer Security HW6 Writeup - Pwn
 
-* [HW6 github (Writeup and Payload)](https://github.com/fdff87554/Personal-Studies/tree/main/Cyber-Security/Writeups/Computer-Security-2022/HW6)
+* [HW6 github (Writeup and Payload)](https://github.com/fdff87554/Computer-Security-2022/tree/main/Homework-06)
 
 ## got2win - LAB
 
