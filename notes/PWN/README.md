@@ -30,6 +30,19 @@
         * **A**ddress **S**pace **L**ayout **R**andomization, ASLR - 程式載入時，stack / heap 等記憶體區塊會使用隨機的位址作為 base address
             * 在一定範圍內隨機，且 **末 12 bits** 是固定的，每次載入不會更動
 
+## BOF
+
+* Mitigation - canary (stack guard)
+    * 啟用 canary 後，OS 會在載入程式時，在 TLS 當中 offset `0x28` 的位置，放置 8 bytes 的隨機數，該值就稱作 canary。
+    * 當程式執行到 `ret` 時，會先檢查 stack 上的 canary 是否被修改 (跟 TLS 記憶體的值是否相同)，如果被修改 (代表發生 stack overflow)，則會直接結束程式。
+    * 但因為 canary 的第一個 byte 必定為 00，所以可以利用這個特性來 bypass canary。
+    * fs register - 用來存放 TLS 的 base address，雖然存取 fs 取得 TLS address 是 OS 做的，本身 fs 的值是 0，因此 TLS 的位址並不是那麼好找，但因為 runtime 時 TLS 與 lib 在 **多數情況下** 有固定的 offset，因此可以透過 debugging 取得 offset，打 exploit 時就可以直接利用加減 offset 來取得 TLS address。
+    * gdb debugging 時，取得 TLS address 的方法有:
+        * `pwndbg> tls`
+        * `pwndbg> search -8 <canary>`
+        <!-- * `pwndbg> x/8gx $fs:0x28` -->
+        > canary 的值可以透過查看 function prologue 跟 epilogue 來找到，或是直接用 pwndbg 中下 canary 也可以。
+        
 
 ## Demo
 
