@@ -42,13 +42,23 @@
         * `pwndbg> search -8 <canary>`
         <!-- * `pwndbg> x/8gx $fs:0x28` -->
         > canary 的值可以透過查看 function prologue 跟 epilogue 來找到，或是直接用 pwndbg 中下 canary 也可以。
-        
+    > ![using canary and without canary](../../images/canary-example.png)
+* Mitigation - memory randomization
+    * 過去的程式碼因為 address 都是固定的，因此只要能控制執行流程，就可以直接控制程式執行，因此會有 buffer overflow 的問題。
+    * 因此提出了 memory randomization，讓程式碼的 address 都是隨機的，編譯時將程式內的資料以相對位置儲存。
+    * **每次執行時會加上一個隨機的 base address，此時資料的絕對位置才會被確定**。
+    * 雖然每次的 base address 不相同，但資料的 offset 都是固定的，因此可以透過這個特性來取得資料的絕對位置。
+    * 分別在 **應用程式層** 跟 **作業系統層** 來實施:
+        * PIE (Position-Independent Executable) - 隨機化執行黨載入時的 base address
+        * ASLR (Address Space Layout Randomization) - 隨機化所有需要重新定位 (relocation) 的記憶體區塊如 stack、library、heap 等的 base address。
+    * 只要沒有開啟 ASLR 的情況下，即使程式開啟 PIE，也會因為每次產生的 **base address 相同**，保護效果跟沒有開 PIE 一樣。
+
 
 ## Demo
 
 ### Demo 1 - Basic Stack Overflow `demo_BOF1`
 
-> Env: `gcc -o demo_BOF1 -fno-stack-protector -fno-pie -no-pie demo_BOF1.c` 用來關閉 stack protector 與 PIE]
+> Env: `gcc -o demo_BOF1 -fno-stack-protector -fno-pie -no-pie demo_BOF1.c` 用來關閉 stack protector 與 PIE
 
 * `demo_BOF1`: 目標碰到 `backdoor()` 這個 function，可以先用 `objdump -d -M intel ./demo_BOF1 | less` 來觀察找到 `backdoor` function 的所在位置，可以看到位置是在 `0011c9`，把 return address 控制成目標的 `401156` 就可以操作到 backdoor function 了，
     > ![Objdump Memory Address for demo_BOF1](../../images/objdump-memory-address-demo_BOF1.png)
@@ -61,3 +71,9 @@
     > ![Python Script for demo_BOF1 02](../../images/python-script-demo_BOF1-02.png)
     > ![GDB for demo_BOF1 point to backdoor start 03](../../images/gdb-demo_BOF1-point-to-backdoor-start-03.png)
     > ![GDB for demo_BOF1 point to backdoor start 04](../../images/gdb-demo_BOF1-point-to-backdoor-start-04.png)
+
+
+### Demo 2 - Stack Overflow with Canary `demo_BOF2`
+
+> Env: `gcc -o demo_BOF2 -fstack-protector -fno-pie -no-pie demo_BOF2.c` 用來開啟 stack protector 與關閉 PIE
+

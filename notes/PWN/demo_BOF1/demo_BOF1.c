@@ -1,3 +1,4 @@
+// gcc -o demo_BOF1 -fno-stack-protector -fno-pie -no-pie demo_BOF1.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
