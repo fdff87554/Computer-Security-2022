@@ -2,7 +2,7 @@
 
 [![hackmd-github-sync-badge](https://hackmd.io/YSOLbi79QWaq6TEt-T6HnQ/badge)](https://hackmd.io/YSOLbi79QWaq6TEt-T6HnQ)
 
-* [HW8 github (Writeup and Payload)](https://github.com/fdff87554/Computer-Security-2022/tree/main/Homework-08)
+* [HW8 github (Writeup and Payload)](https://github.com/fdff87554/Computer-Security-2022/tree/main/homework/Homework-08)
 
 
 ## FILE_AAR - LAB
