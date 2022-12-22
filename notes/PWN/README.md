@@ -84,12 +84,26 @@
     * 因為參數的傳遞是透過 Register，因此很容易能透過這些 gadget 來控制呼叫 function 前的參數。
 * Exploit
     * Target - `sys_execve("/bin/sh", NULL, NULL)`
-    * Overflow
-    * Control rdi (param1)
-    * Control rsi (param2)
-    * Control rdx (param3)
-    * Control rip (syscall number)
-    * syscall
+    * 流程:
+        * Overflow
+        * Control rdi (param1)
+        * Control rsi (param2)
+        * Control rdx (param3)
+        * Control rax (syscall number)
+        * syscall
+* Advanced - csu_init
+    * 流程:
+        * control rbp -> 1 (optional)
+        * control rbx -> 0 (optional)
+        * control r12 -> edi
+        * control r13 -> rsi
+        * control r14 -> rdx
+        * control r15 -> function pointer
+* Advanced - Stack pivoting
+    * 因為讀取限制，讓一次 ROP 不能做太多事情。
+    <!-- * 流程:
+        *  -->
+* Tools - `seccomp-tools` 可以用來分析程式訊行中使用到的 seccomp rules
 
 ## Demo
 
