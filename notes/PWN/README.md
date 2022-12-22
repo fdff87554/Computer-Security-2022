@@ -44,8 +44,7 @@
             * 藉由控制程式流程，讓程式跳到 functionB 上，意即執行此 functionB。
 
 
-## BOF
-
+## BOF (Buffer Overflow)
 * Mitigation - canary (stack guard)
     * 啟用 canary 後，OS 會在載入程式時，在 TLS 當中 offset `0x28` 的位置，放置 8 bytes 的隨機數，該值就稱作 canary。
     * 當程式執行到 `ret` 時，會先檢查 stack 上的 canary 是否被修改 (跟 TLS 記憶體的值是否相同)，如果被修改 (代表發生 stack overflow)，則會直接結束程式。
@@ -77,7 +76,7 @@
     * **Full RELRO** - 初始化時，GOT 當中直接儲存 function 的 address，但 GOT 存在於**只有讀取權限 (r--) 的 segment**
 
 
-## ROP
+## ROP (Return Oriented Programming)
 * ROP (**R**eturn **O**riented **P**rogramming) - 透過 return address 來控制程式執行流程，因此可以透過 return address 來執行任意的指令。
     * 因為我們無法執行控制的資料，因此直接使用存在於程式中的指令來執行完成目標行為，而格式為 `<operation>; ret` 的指令可以串起存在於不同位址的指令，在這個過程中使用到的程式碼就叫做 ROP gadget。
         * e.g., `pop rdi; ret, pop rsi; ret, pop rdx; ret` 這三個指令可以串起來執行 `syscall`，因此可以用來執行 `execve("/bin/sh", NULL, NULL)`。
@@ -104,6 +103,10 @@
     <!-- * 流程:
         *  -->
 * Tools - `seccomp-tools` 可以用來分析程式訊行中使用到的 seccomp rules
+
+## FSB (Format String Bug)
+> ![Format String Bug Happen](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/format-string-bug-happen.png)
+> ![Format String Bug Type](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/format-string-bug-type.png)
 
 ## Demo
 
