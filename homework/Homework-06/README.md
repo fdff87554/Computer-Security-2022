@@ -3,7 +3,7 @@
 [![hackmd-github-sync-badge](https://hackmd.io/95hGb9pqTd2YIGBXq37MBA/badge)](https://hackmd.io/95hGb9pqTd2YIGBXq37MBA)
 
 
-* [HW6 github (Writeup and Payload)](https://github.com/fdff87554/Computer-Security-2022/tree/main/Homework-06)
+* [HW6 github (Writeup and Payload)](https://github.com/fdff87554/Computer-Security-2022/tree/main/homework/Homework-06)
 
 ## got2win - LAB
 * 觀察一下程式碼，可以看到說只有一個 main function，
@@ -15,22 +15,22 @@
 * 可以注意到在 `line: 25` 中的 read function 中的 fd 是 1 (fd: 0 = stdin, fd: 1 = stdout, fd: 2 = stderr)，也就是說我們可以利用這個漏洞來 leak 出 flag 的內容。
 * 先用 `checksec --file=chal` 檢查一下程式的保護機制，可以看到 `RELRO: Partial RELRO`, `Stack: Canary found`, `NX: NX enabled`, `PIE: No PIE (0x400000)`。
     * 因為沒有 PIE，所以我們可以直接用 `objdump -d -M intel chal | less` 來取得程式的 address。
-    > ![pwn-got2win-checksec](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/pwn-got2win-checksec.png)
+    > ![pwn-got2win-checksec](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/pwn-got2win-checksec.png)
 * 那我們的目標就是覆蓋掉 GOT 的 read 改成 write 讓他依照 stdout 的 fd 來輸出 flag 的內容。
 * 打開 pwndbg 來找一下 GOT 的狀況，在 pwndbg 中直接輸入 `got` 就會取得 GOT 的狀況，位址會是 `0x404038`。
-    > ![pwn-got2win-pwndbg-got](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/pwn-got2win-pwndbg-got.png)
+    > ![pwn-got2win-pwndbg-got](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/pwn-got2win-pwndbg-got.png)
 * 用 `objdump -d -M intel chal | less` 來找一下 write@plt 的位址，可以發現 write@plt 的位址是 `0x4010c0`。
-    > ![pwn-got2win-objdump-read](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/pwn-got2win-objdump-read.png)
+    > ![pwn-got2win-objdump-read](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/pwn-got2win-objdump-read.png)
 * 那目標就是把 GOT 中的 read 改成 write@plt 的位址，因為這樣就等於實際執行了 write 而不是 read 了。會得到 flag: `FLAG{apple_1f3870be274f6c49b3e31a0c6728957f}`
 
 ## rop2win - LAB
 
 * 起手式一樣先檢查 `checksec` 的狀況，如下圖有 Canary, NX, no-PIE (可以直接看 address), Partial RELRO。
-    > ![pwn-rop2win-checksec](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/pwn-rop2win-checksec.png)
+    > ![pwn-rop2win-checksec](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/pwn-rop2win-checksec.png)
 * 之後觀察一下 source，可以看到有加入 `seccomp` 這個 lib 來保護 syscall 的使用，可以看到只有 `open`, `read`, `write` 這幾個 syscall 可以做使用，其他的 syscall 都會被擋掉。
-    > ![pwn-rop2win-source-syscall](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/pwn-rop2win-source-syscall.png)
+    > ![pwn-rop2win-source-syscall](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/pwn-rop2win-source-syscall.png)
 * 首先先找到 `ROP_addr` 的位址，可以看到 `ROP_addr` 的位址是 `4e3360`，`fn_addr` 則是 `4e3340`。
-    > ![pwn-rop2win-pwndbg-ROP_addr](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/pwn-rop2win-pwndbg-ROP_addr-fn_addr.png)
+    > ![pwn-rop2win-pwndbg-ROP_addr](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/pwn-rop2win-pwndbg-ROP_addr-fn_addr.png)
 * 現在我們的目標很簡單，就是我們希望利用所有已知可用的操作來把 flag 給印出來，不是像其他題目一樣建立 `sh` 的原因是因為，這題的 `seccomp` 並沒有放行 `execve` 這個 syscall，所以我們只能用 `open`, `read`, `write` 這三個 syscall 來達成目的。
 * 對應到這題的 c code，我們知道了有三次的輸入機會，分別是給 filename，拿到 ROP 跟 overflow，因此對於我們來說我們這題就是建構 ROP 去指定出我們需要的 syscall。
     * 操作 ROP 在沒有特殊的情況之下，我們會需要 control `rdi` (for param1), `rsi` (for param2), `rdx` (for param3) 跟 `rax` (for syscall number) 這四個 register，因此我們需要的 gadget 會是 `pop rdi; ret;`, `pop rsi; ret;`, `pop rdx; ret;` 跟 `pop rax; ret;` 這四個 gadget。
@@ -85,7 +85,7 @@
     >)
     > ```
 * 依照這樣的 Payload，我們只需要在輸入 `/bin/sh` 之後就可以 get shell 了，拿到 flag: `FLAG{chocolate_c378985d629e99a4e86213db0cd5e70d}`
-    > ![rop++-demo-image](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/rop++-demo-image.png)
+    > ![rop++-demo-image](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/rop++-demo-image.png)
 
 
 ---
