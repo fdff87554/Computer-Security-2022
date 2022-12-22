@@ -19,7 +19,7 @@
         * `lib` - shared library
         * `tls` - thread local storage
         * `stack` - 用來儲存當前 function 的執行狀態的空間
-        > ![Memory Layout](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/memory-layout.png)
+        > ![Memory Layout](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/memory-layout.png)
     * Protection
         * **P**osition-**I**ndependent **E**xecutable, PIE - 程式碼會以相對位置的方式表示，而非絕對位置
         * **N**o-e**X**cute, NX - `.text` 之外的 section 不會有執行權限
@@ -54,7 +54,7 @@
         * `pwndbg> tls`
         * `pwndbg> search -8 <canary>`
         > canary 的值可以透過查看 function prologue 跟 epilogue 來找到，或是直接用 pwndbg 中下 canary 也可以。
-    > ![using canary and without canary](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/canary-example.png)
+    > ![using canary and without canary](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/canary-example.png)
 * Mitigation - memory randomization
     * 過去的程式碼因為 address 都是固定的，因此只要能控制執行流程，就可以直接控制程式執行，因此會有 buffer overflow 的問題。
     * 因此提出了 memory randomization，讓程式碼的 address 都是隨機的，編譯時將程式內的資料以相對位置儲存。
@@ -105,8 +105,8 @@
 * Tools - `seccomp-tools` 可以用來分析程式訊行中使用到的 seccomp rules
 
 ## FSB (Format String Bug)
-> ![Format String Bug Happen](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/format-string-bug-happen.png)
-> ![Format String Bug Type](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/format-string-bug-type.png)
+> ![Format String Bug Happen](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/format-string-bug-happen.png)
+> ![Format String Bug Type](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/format-string-bug-type.png)
 
 ## Demo
 
@@ -115,16 +115,16 @@
 > Env: `gcc -o demo_BOF1 -fno-stack-protector -fno-pie -no-pie demo_BOF1.c` 用來關閉 stack protector 與 PIE
 
 * `demo_BOF1`: 目標碰到 `backdoor()` 這個 function，可以先用 `objdump -d -M intel ./demo_BOF1 | less` 來觀察找到 `backdoor` function 的所在位置，可以看到位置是在 `0011c9`，把 return address 控制成目標的 `401156` 就可以操作到 backdoor function 了，
-    > ![Objdump Memory Address for demo_BOF1](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/objdump-memory-address-demo_BOF1.png)
+    > ![Objdump Memory Address for demo_BOF1](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/objdump-memory-address-demo_BOF1.png)
 * 利用 `b'a' * 0x10` 來覆蓋掉 `name[0x10]` 的 space，並且把 `return address` 覆蓋成 `backdoor` 的位址，就可以成功執行 `backdoor` 了
-    > ![Python Script for demo_BOF1 01](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/python-script-demo_BOF1-01.png)
+    > ![Python Script for demo_BOF1 01](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/python-script-demo_BOF1-01.png)
 * 從 gdb 的操作中可以看到我們已經成功進入 `backdoor` function 並且 load 到 `system('/bin/sh')` 了，但這邊會發現指令並沒有被正常執行
-    > ![GDB for demo_BOF1 point to backdoor start 01](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/gdb-demo_BOF1-point-to-backdoor-start-01.png)
-    > ![GDB for demo_BOF1 point to backdoor start 02](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/gdb-demo_BOF1-point-to-backdoor-start-02.png)
+    > ![GDB for demo_BOF1 point to backdoor start 01](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/gdb-demo_BOF1-point-to-backdoor-start-01.png)
+    > ![GDB for demo_BOF1 point to backdoor start 02](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/gdb-demo_BOF1-point-to-backdoor-start-02.png)
 * 原因是因為我們觸發了 glibc rsp 16 bytes 對其問題，在 64 bits 環境下，有些 glibc 版本會預設 stack 位址 要對齊 16 bytes，意即 rsp 的值要能被 16 整除 ，rsp 最後一碼必須為 0。針對這個問題其實目標就是去 +8 or -8 讓 stack 去對齊 0x10，而只要我們略過 `push rbp` 就可以達成這個目的，因為原本的 rbp 跟 rsp 是有對其的，我只要避免 `push rdp` 影響到了這個對其，其實就達到要求了。
-    > ![Python Script for demo_BOF1 02](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/python-script-demo_BOF1-02.png)
-    > ![GDB for demo_BOF1 point to backdoor start 03](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/gdb-demo_BOF1-point-to-backdoor-start-03.png)
-    > ![GDB for demo_BOF1 point to backdoor start 04](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/gdb-demo_BOF1-point-to-backdoor-start-04.png)
+    > ![Python Script for demo_BOF1 02](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/python-script-demo_BOF1-02.png)
+    > ![GDB for demo_BOF1 point to backdoor start 03](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/gdb-demo_BOF1-point-to-backdoor-start-03.png)
+    > ![GDB for demo_BOF1 point to backdoor start 04](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/gdb-demo_BOF1-point-to-backdoor-start-04.png)
 
 
 ### Demo 2 - Stack Overflow with Canary `demo_BOF2`
@@ -140,7 +140,6 @@
 ### Demo 4 - ROP with one gadget `demo_one_gadget_with_ROP`
 
 * 可以利用 `ldd` 來檢查 process 所使用的 libc 版本，command: `ldd ./demo_one_gadget_with_ROP`，並找到對應的 one gadget `one_gadget /lib/x86_64-linux-gnu/libc.so.6`
-    > ![ldd for demo_one_gadget_with_ROP](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/ldd-demo_one_gadget_with_ROP.png)
-    > ![one_gadget for demo_one_gadget_with_ROP](https://github.com/fdff87554/Computer-Security-2022/blob/main/images/pwn/one_gadget-demo_one_gadget_with_ROP.png)
-
+    > ![ldd for demo_one_gadget_with_ROP](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/ldd-demo_one_gadget_with_ROP.png)
+    > ![one_gadget for demo_one_gadget_with_ROP](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/pwn/one_gadget-demo_one_gadget_with_ROP.png)
 
