@@ -25,8 +25,17 @@
 
 
 ## Normal Login Panel (Flag 1) - Lab
+* 這題只有一個 login page 而且沒有太多的資訊，登入頁面我們開始嘗試 SQL Injection，但因為我們不知道這個頁面會準備怎樣的資訊給我們，因此首先要先確認回顯狀況。
+* 這邊提示有給我們有一個 username 是 admin，這邊輸入錯誤的 password 會拿到 `Login faild count: 30` 這個 error message，而其他不存在的 user 則是 `User doesn't exist! Login faild count: xx`。
+* 我們嘗試起手的 sql injection 可以看到當輸入 `admin' or 1=1-- #` 看到的不是 `Login faild count: xx` 而是 `User doesn't exist! Login faild count: xx`，因此可以利用 error message 的差異來做到辨識 SQL Injection 的注入狀況。
+* 那這邊可以開始利用 `union select` 來猜共有幾個欄位，但這邊改用 `order by` 來猜，概念上是一樣的，在猜到 `admin' order by 5 -- #` 的時候會壞掉就可以知道共有 4 個欄位了。
+* 因為現在只有 `Login faild count: xx` 的這個 xx 會把資料回顯在前端，因此現在來確認哪個欄位會把資料顯示在這邊，利用 `admin' union select NULL, NULL, NULL, 'a' -- #` 來確認第四個欄位會把資料回顯在前端。
+* 那這個時候要開始猜 DBMS 是哪一種了，理論上會開始猜 table for example `user()` 是 mysql，或者交給我們的 sqlmap 好工具去爆破，那這邊講師有說是 SQLite，因此我們利用 `admin' union SELECT NULL, NULL, NULL, sql FROM sqlite_master WHERE type='table' -- #`，可以看到我們有 `users` 這個 table，裡面分別有 `id`、`username`、`password`、`count`四個欄位。
+    > ![web-lab03-list-sql-info](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab03-list-sql-info.png)
+* 那我們現在目標是知道 password，因此下 `admin' union SELECT NULL, NULL, NULL, password FROM users -- #` 來從 users 這張表取得 password，可以拿到 flag `FLAG{Un10N_s31eCt/**/F14g_fR0m_s3cr3t}`。
 
 ## Normal Login Panel (Flag 2) - Lab
+* 
 
 
 
