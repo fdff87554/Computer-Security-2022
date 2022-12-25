@@ -12,9 +12,23 @@
     > ![web-lab01-php-session-file-LFI2RCE](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab01-php-session-file-LFI2RCE.png)
 * 到這裡就可以直接印出我們的 flag.txt 取得 flag: `FLAG{LFI_t0_rC3_1s_e4Sy!}`
     > ![web-lab01-ans](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab01-ans.png)
-`
 
-<!-- https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/ -->
+
+## Whois Tool - Lab
+* 這題題目的 source code 非常簡單，就是會把我們的輸入 `host` 串接進 `echo 'whois "{$host}" 2>&1;';`，而且有個限制就是字串輸入不能超過 15 個字元，因此我們的目標就是要找出一個可以 bypass 這個限制的 payload。
+* 概念很簡單，我們其實不在意 `whois` 的查找，而且我們希望確保我們的 payload 不會被視為 `whois` 的查找，因此我們建構了 payload `"; ls #` 來分別做到，截斷前面的 whois 查找，並且利用 `;` 做到前一個指令結束之後執行 `ls` 並且利用 `#` 註解掉剩下的部分，可以看到我們的 payload 成功執行了 `ls`，並且可以成功看到有 `flag.txt` 的檔案。
+    > ![web-lab02-ls](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab02-ls.png)
+* 基於上面的概念理論上我們可以直接建構 `"; cat flag.txt #` 這樣的 payload 去印出 flag.txt 來取得 flag，但題目設計的非常人性化，這邊個 payload 剛好卡在大於 15 個字元，為了減少字元的使用，這邊決定利用 `*` 萬用字元來避免長度限制，因為同目錄底下沒有其他 f 開頭的檔案了，因此可以直接利用 `"; cat f* #` 來印出 flag: `FLAG{c0mM4nd_1nj3cT10n_';whoami}`
+* 那因為我們還知道有其他指令串些的方式如 `&&` 用在前一個指令成功時接著執行的指令，還有 `||` 用在前一個指令失敗時的後一個指令執行的狀況，因此這邊延伸一個 payload 是 `"&& cat f* #`，會是 `&&` 而不是 `||` 的原因是因為 `"` 對 `whois` 指令的截斷，必沒有觸發 `whois` 指令的錯誤 (找不到東西不是一種錯誤，是一種結果)，因此對於我們來說要讓 `cat flag.txt` 被執行到就要利用 `&&` 來達成。
+    > ![web-lab02-ans](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab02-ans-more.png)
+
+
+## Normal Login Panel (Flag 1) - Lab
+
+## Normal Login Panel (Flag 2) - Lab
+
+
+
 ---
 ###### tags: `CyberSec` `Writeup` `2022`
 
