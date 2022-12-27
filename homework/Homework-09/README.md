@@ -75,10 +75,9 @@
 * 這題的 hint 中有提示要 insert 一個 user 進去 db 還有看一下 `less.js` 這個酷東西，但這邊可以利用了前一題的二分搜把原本的 admin account 還有 password 爆破出來(密碼有經過 md5 但因為是已知洩漏密碼，因此這邊直接利用 md5 去爆破)。也可以 insert: `'; (insert into pasteweb_accounts (user_account, user_password) values ('crazyfire', '336567ef3b1efcf65cbf1b1c51f41894')) > 0 -- #` 這個 payload 來 insert 一個 user 進去 db，因為用 admin 那個 user 大家一直搶，所以這邊我就用自己 insert 的 user 來進行操作。
 * 進去之後可以看到總共有五個頁面，分別是 `edithtml.php`、`editcss.php`、`view.php`、`share.php`、`download.php`，這邊偷吃步把操作專注在 `editcss.php` 是因為提示說的 less.js 是一個 css 的渲染器，去看了 function documents 之後把操作專注在 Misc function (聽起來就很 CTF 對吧) 的 `data-uri` 這個會看起來就可讀 path 的 function 上，可以看到這個 `data-uri` 會在取得 path 的資料之後把資料讀出來經過 base64 encode 編碼之後輸出，因此我們就利用這個特性建構的 payload 來讀取 `/etc/passwd` 試試看，在 `view.php` 中可以看到我們的路徑資料被載入並且我們 decode 之後可以看到真的是 `/etc/passwd` 的資料，因此我們就可以利用這個特性去讀取各種資料了。
     ```less=
-    ```less=
     @bg: data-uri('image/jpeg;base64', '../../../../../etc/passwd');
     div {
-    background: @bg; 
+        background: @bg; 
     }
     ```
 * 那這題有一個提示是說 flag 在 source code 中，但直接下 `data-uri('image/jpeg;base64', '../../../../../var/www/html/editcss.php')` 這些 payload 會發現會出現 `No 'php'!` 至個 error message，所以不能直接讀取 php 檔案，那這邊隨手逛了 `robots.txt` 發現有禁止 .git 檔案被爬取，因此這邊決定來偷偷看 .git。
@@ -88,6 +87,8 @@
 * 可以看到其期望的 objects files 如圖，這邊就利用相同的方式把所有的檔案 dump 出來並且放在 .git 檔案之下，之後就可以直接再利用 GitHack 把所有的 source code dump 出來了，dump 出來的 code 會放在 payload 中，並且可以在 `index.php` 中看到 flag: `FLAG{a_l1tTl3_tRicKy_.git_L34k..or_D1d_y0u_f1nD_a_0Day_1n_lessphp?}`。
 
 ## PasteWeb (Flag 3) - HW
+
+
 
 
 ---
