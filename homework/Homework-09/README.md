@@ -72,7 +72,7 @@
 * 之後就是依照上面想找的資料邏輯一個一個字元爆破所需要的資料 (包含 flag)，請看 payload.py。最後拿到 flag: `FLAG{B1inD_SqL_IiIiiNj3cT10n}`
 
 ## PasteWeb (Flag 2) - HW
-* 這題的 hint 中有提示要 insert 一個 user 進去 db 還有看一下 `less.js` 這個酷東西，但這邊可以利用了前一題的二分搜把原本的 admin account 還有 password 爆破出來(密碼有經過 md5 但因為是已知洩漏密碼，因此這邊直接利用 md5 去爆破)。也可以 insert: `'; (insert into pasteweb_accounts (user_account, user_password) values ('crazyfire', '336567ef3b1efcf65cbf1b1c51f41894')) > 0 -- #` 這個 payload 來 insert 一個 user 進去 db，因為用 admin 那個 user 大家一直搶，所以這邊我就用自己 insert 的 user 來進行操作。
+* 這題的 hint 中有提示要 insert 一個 user 進去 db 還有看一下 `less.js` 這個酷東西，但這邊可以利用了前一題的二分搜把原本的 admin account 還有 password 爆破出來(密碼有經過 md5 但因為是已知洩漏密碼，因此這邊直接利用 md5 去爆破)。也可以 insert: `'; insert into pasteweb_accounts (user_account, user_password) values ('<name>', '<password_with_md5>')-- #` 這個 payload 來 insert 一個 user 進去 db，因為用 admin 那個 user 大家一直搶，所以這邊我就用自己 insert 的 user 來進行操作。
 * 進去之後可以看到總共有五個頁面，分別是 `edithtml.php`、`editcss.php`、`view.php`、`share.php`、`download.php`，這邊偷吃步把操作專注在 `editcss.php` 是因為提示說的 less.js 是一個 css 的渲染器，去看了 function documents 之後把操作專注在 Misc function (聽起來就很 CTF 對吧) 的 `data-uri` 這個會看起來就可讀 path 的 function 上，可以看到這個 `data-uri` 會在取得 path 的資料之後把資料讀出來經過 base64 encode 編碼之後輸出，因此我們就利用這個特性建構的 payload 來讀取 `/etc/passwd` 試試看，在 `view.php` 中可以看到我們的路徑資料被載入並且我們 decode 之後可以看到真的是 `/etc/passwd` 的資料，因此我們就可以利用這個特性去讀取各種資料了。
     ```less=
     @bg: data-uri('image/jpeg;base64', '../../../../../etc/passwd');
@@ -87,8 +87,40 @@
 * 可以看到其期望的 objects files 如圖，這邊就利用相同的方式把所有的檔案 dump 出來並且放在 .git 檔案之下，之後就可以直接再利用 GitHack 把所有的 source code dump 出來了，dump 出來的 code 會放在 payload 中，並且可以在 `index.php` 中看到 flag: `FLAG{a_l1tTl3_tRicKy_.git_L34k..or_D1d_y0u_f1nD_a_0Day_1n_lessphp?}`。
 
 ## PasteWeb (Flag 3) - HW
-
-
+* 在第二題拿到所有的 Source Code 之後，就開始翻程式碼看看有什麼漏洞可以運用，因為題目有提示要執行 `/readflag` 這個檔案。
+* 在翻找檔案的過程中可以發現有幾的東西對我們來說很重要，首先就是對於每個使用者來說，Server 都會為我們再 `./sandbox` 這個目錄底下基於 `user_name` 為我們建一個存放我們匯入的 css 檔案的位置，而且在 download.php 中可以看到，當我們 download 檔案的時候，他會把整個目錄底下的東西利用 `tar -cvf download.tar *` 全部打包成 download.tar 檔案給我們。
+* 好，看到這邊首先反應到的事情是這邊有一個 `tar` 打包利用 `*` 萬用字元造成的 Wildcard Injection，這個漏洞的原理其實嚴格說起來是 Unix 系統中，對於萬用字元的處理方式造成的，因為今天 `*` 的使用時，對於 command 來說他是會把檔名 list 出來的，而這個時候對於 command 來說如果有一個參數形狀的檔名，對他來說會是以一個參數的方式去做執行而不是讀取檔案的方式，可以看截圖中的範例，可以看到就算我們給予的是檔名 `--help`，但因為對於 `cat` 指令來說，這也是參數，因此會直接被當作參數執行而非印出檔案內容。
+    > ![web-hw3-filename-example-with-cat](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/week-01/web-hw3-filename-example-with-cat.png)
+    > ![web-hw3-wildcard-injection-example-with-cat](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/week-01/web-hw3-wildcard-injection-example-with-cat.png)
+* 因此概念上來說，我們要運用存在於 `download.php` 的通用字元打包漏洞，嘗試在 `./sandbox/` 這個目錄底下建構我們想要操作的檔名，然後藉由點擊 download 來達到我們想要的目的。
+* 那查詢關於 **Tar Wildcard Injection** 這個 Injection 的時候，可以查到以下 payload，以下 payload 是藉由 tar 在打包資料過程中 `--checkpoint[=NUMBER]` 也就是每 NUMBER 條紀錄去顯示進度消息 (default: 10) 以及 `--checkpoint-action=ACTION` 也就是當達到 checkpoint 的時候要執行的動作，而這邊的 `ACTION` 可以是 `exec=COMMAND` 也就是執行一個指令，藉由上述狀況如果我們當前目錄又剛好有 shell.sh 的檔案裡面是一個執行的 shell script，那我們就可以藉由這個漏洞來達到 RCE 的目的。
+    > ```bash
+    > echo "" > "--checkpoint=1"
+    > echo "" > "--checkpoint-action=exec=sh shell.sh"
+    > # tar -cvf download.tar * will look like
+    > # tar -cvf download.tar --checkpoint=1 --checkpoint-action=exec=sh shell.sh
+    > ```
+* 這邊順便整理一下我們手上可以操作的參數，首先是在 edithtml.php 中的 `$_POST['html']` 可以讓我們把東西寫進去 `index.html` 之中，再來是 editcss.php 中我們有 `$_POST['less']` 會把資料寫進去 `input.less` 中，還有一個參數 `$_POST['theme']` 會是一個會經過 `/` 過濾的檔名，會創建一個 css 變成 `theme.css`。
+* 回頭整理一下現在的問題，現在的問題在於，對於上面的 payload 的操作，會有幾個限制，
+    1. 會需要兩個檔案，因為會需要一個 `--checkpoint=1` 讓他噴資料噴得很快，另一個則是 `--checkpoint-action=exec=sh shell.sh` 這個 shell.sh 會是我們要執行的 shell script。但我們目前怎麼看都只能有一個檔案，所以有沒有辦法不要設定 `--checkpint=1` 而做到 checkpoint-action？
+    2. 檔名後面會被加入 .css 後綴，有沒有任何辦法繞過？
+* 那第一個問題其實可以用數量戰術取勝 OwO，在 document 中就有提到說 `--checkpoint` 的 defualt 是 10，也就是每打包 10 就會執行一次 `--checkpoint-action`，因此我們可以利用如下的方式做到不用設定 `--checkpoint`，而是讓他每 10 條紀錄就執行一次 `--checkpoint-action`。
+    > ![web-hw3-wildcard-injection-example-with-cat-without-checkpoint-set](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/week-01/web-hw3-wildcard-injection-example-with-cat-without-checkpoint-set.png)
+* 至於第二個問題就是想辦法把 `/readflag` 這個檔案的執行結果輸出，而且我們這邊還有 `index.html` 可以拿來寫 shell，所以可以在裡面新增以下 payload 來讀取 `/readflag` 的內容。
+    > ```bash
+    > !/bin/sh
+    > /readflag > meow.txt
+    > ```
+* 我們統整一下所有的流程跟操作，
+    1. 我們要把 index.html 變成我們的攻擊 payload 檔案讓 sh 去做操作
+        > ![web-hw3-index-html-payload](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/week-01/web-hw3-index-html-payload.png)
+    2. 我們要想辦法塞一堆檔案進去讓 `tar` 打包起來可以過 `--checkpoint=10` 這個行為去確保 `--checkpoint-action` 會被執行
+        > ![web-hw3-add-files-for-tar](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/week-01/web-hw3-add-files-for-tar.png)
+    3. 加入惡意檔名的檔案讓 `tar` 打包起來會有萬用字元漏洞，檔名叫 `--checkpoint-action=exec=sh index.html `
+        > ![web-hw3-add-malicious-file-name](https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/week-01/web-hw3-add-malicious-file-name.png)
+    4. 點擊 download 去觸發 download.php 讓 `tar` 打包檔案執行萬用字元漏洞
+    5. 再點擊一次 download.php 拿到輸出的 `meow.txt` 檔案
+* 取得我們的 flag: `FLAG{aRgUm3nT_Inj3ct10n_2_RcE}`
 
 
 ---
